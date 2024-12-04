@@ -78,26 +78,6 @@ def show_menu():
                         pygame.quit()
                         sys.exit()
 
-
-        # Manejo de eventos del menú
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w or event.key == pygame.K_UP:  # Mover hacia arriba
-                    selected_option = (selected_option - 1) % len(options)
-                if event.key == pygame.K_s or event.key == pygame.K_DOWN:  # Mover hacia abajo
-                    selected_option = (selected_option + 1) % len(options)
-                if event.key == pygame.K_RETURN:  # Confirmar selección
-                    if selected_option == 0:  # Primera opción: Play
-                        return  # Salir del menú y empezar el juego
-                    if selected_option == 1:  # Segunda opción: Quit
-                        pygame.quit()
-                        sys.exit()
-
-
-
 # Función de pausa
 def pause_game():
     paused = True

@@ -1,13 +1,11 @@
 Ideas a implementar:
-01 - Agregar tiempo antes de incio, un contador que diga 3, 2, 1 y empieze, para dar un tiempo de raccion luego de anotar un punto.
-02 - Agregar un aumento de velocidad a medida que pasa el tiempo en la pelota.
-03 - Agregar nombres a los jugadores, jugador 1 y jugador 2, con la posibilidad de cambiar el nombre.
-04 - Agregar opción de menú que muestre los controles del jugador 1 (asdw) y jugador 2 (flechas).
-05 - Agregar opción de pantalla completa.
-06 - Agregar una animación a la hora de marcar un punto.
-07 - Agregar variación de colores de la cancha en las opciones de menú, algo como cambiar de color el fondo, verde, azul, violeta, etc.
-08 - Agregar cambio de controles.
-09 - Agregar titulo del juego en el menú "GonRez's Pong".
-10 - Agregar opción de reiniciar en menú de pausa (reinciciar el marcador).
-11 - Agregar efecto de llamas a la pelota a cuando vaya muy veloz.
-12 - 
+ - Agregar nombres a los jugadores, jugador 1 y jugador 2, con la posibilidad de cambiar el nombre.
+ - Agregar opción de menú que muestre los controles del jugador 1 (asdw) y jugador 2 (flechas).
+ - Agregar opción de pantalla completa.
+ - Agregar una animación a la hora de marcar un punto.
+ - Agregar variación de colores de la cancha en las opciones de menú, algo como cambiar de color el fondo, verde, azul, violeta, etc.
+ - Agregar cambio de controles.
+ - Agregar opción de reiniciar en menú de pausa (reiniciar el marcador).
+ - Agregar efecto de llamas a la pelota a cuando vaya muy veloz.
+ - Agregar Opciones
+ - 

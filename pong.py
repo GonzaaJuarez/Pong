@@ -167,8 +167,12 @@ def main_game():
             ball_speed[1] = -ball_speed[1]
 
         # Detección de colisiones con las paletas
-        if ball.colliderect(left_paddle) or ball.colliderect(right_paddle):
-            ball_speed[0] = -ball_speed[0]
+        if ball.colliderect(left_paddle):
+            ball_speed[0] = abs(ball_speed[0])  # Asegurar que la bola vaya hacia la derecha
+            ball_speed[1] += (ball.centery - left_paddle.centery) * 0.05  # Cambiar ángulo
+        if ball.colliderect(right_paddle):
+            ball_speed[0] = -abs(ball_speed[0])  # Asegurar que la bola vaya hacia la izquierda
+            ball_speed[1] += (ball.centery - right_paddle.centery) * 0.05  # Cambiar ángulo
 
          # Detección de puntuaciones
         if ball.left <= 0:  # Punto para la derecha

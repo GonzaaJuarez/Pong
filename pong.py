@@ -35,14 +35,14 @@ def countdown():
 
 # Función para mostrar el menú
 def show_menu():
-    options = ["Play", "Quit"]  # Opciones del menú
+    options = ["Singleplayer", "Multiplayer", "Quit"]  # Opciones del menú
     selected_option = 0  # Índice de la opción seleccionada
 
     while True:
         screen.fill(BLACK)
 
         # Título del juego
-        draw_text("GonRez's Pong", font, WHITE, screen, WIDTH // 2, HEIGHT // 4)
+        draw_text("GonRez's Game", font, WHITE, screen, WIDTH // 2, HEIGHT // 4)
 
         # Dibujar las opciones con borde de rectángulo
         for i, option in enumerate(options):
@@ -67,14 +67,16 @@ def show_menu():
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w or event.key == pygame.K_UP:  # Mover hacia arriba
+                if event.key in (pygame.K_w, pygame.K_UP):  # Mover hacia arriba
                     selected_option = (selected_option - 1) % len(options)
-                if event.key == pygame.K_s or event.key == pygame.K_DOWN:  # Mover hacia abajo
+                if event.key in (pygame.K_s, pygame.K_DOWN):  # Mover hacia abajo
                     selected_option = (selected_option + 1) % len(options)
                 if event.key == pygame.K_RETURN:  # Confirmar selección
-                    if selected_option == 0:  # Primera opción: Play
-                        return  # Salir del menú y empezar el juego
-                    if selected_option == 1:  # Segunda opción: Quit
+                    if selected_option == 0:  # "Singleplayer"
+                        return "singleplayer"
+                    if selected_option == 1:  # "Multiplayer"
+                        return "multiplayer"
+                    if selected_option == 2:  # "Quit"
                         pygame.quit()
                         sys.exit()
 
@@ -96,7 +98,7 @@ def pause_game():
                     paused = False
 
 # Función principal del juego
-def main_game():
+def main_game(singleplayer):
     # Paletas y bola
     paddle_width, paddle_height = 20, 100
     ball_size = 20
@@ -108,6 +110,7 @@ def main_game():
     # Velocidades
     ball_speed = [4, 4]
     paddle_speed = 5
+    ai_speed = 4  # Velocidad de la IA
 
     # Marcador
     left_score = 0
@@ -138,10 +141,22 @@ def main_game():
             left_paddle.y -= paddle_speed
         if keys[pygame.K_s] and left_paddle.bottom < HEIGHT:
             left_paddle.y += paddle_speed
-        if keys[pygame.K_UP] and right_paddle.top > 0:
-            right_paddle.y -= paddle_speed
-        if keys[pygame.K_DOWN] and right_paddle.bottom < HEIGHT:
-            right_paddle.y += paddle_speed
+
+        if singleplayer:
+            # Movimiento de la IA
+            if ball.centery < right_paddle.centery and right_paddle.top > 0:
+                right_paddle.y -= ai_speed
+            if ball.centery > right_paddle.centery and right_paddle.bottom < HEIGHT:
+                right_paddle.y += ai_speed
+        else:
+            # Movimiento del jugador 2
+            if keys[pygame.K_UP] and right_paddle.top > 0:
+                right_paddle.y -= paddle_speed
+            if keys[pygame.K_DOWN] and right_paddle.bottom < HEIGHT:
+                right_paddle.y += paddle_speed
+
+        # Movimiento de la bola, rebotes, puntuación, etc. (mantén el código existente aquí)
+
 
         # Verificar si el contador sigue corriendo
         if countdown_running:
@@ -235,5 +250,8 @@ def main_game():
             start_time = pygame.time.get_ticks()  # Reiniciar el tiempo
 
 # Lógica principal
-show_menu()
-main_game()
+game_mode = show_menu()
+if game_mode == "singleplayer":
+    main_game(singleplayer=True)
+elif game_mode == "multiplayer":
+    main_game(singleplayer=False)

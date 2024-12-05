@@ -145,18 +145,41 @@ def main_game():
 
         # Verificar si el contador sigue corriendo
         if countdown_running:
-            elapsed_time = (pygame.time.get_ticks() - countdown_start_time) // 1000  # Tiempo en segundos
-            if elapsed_time >= 3:  # Si el contador ha terminado
-                countdown_running = False
-            else:
+            while countdown_running:
+                elapsed_time = (pygame.time.get_ticks() - countdown_start_time) // 1000  # Tiempo en segundos
+                if elapsed_time >= 3:  # Si el contador ha terminado
+                    countdown_running = False
+                    break
+
                 # Dibujar el contador
                 screen.fill(BLACK)
                 draw_text(str(3 - elapsed_time), font, WHITE, screen, WIDTH // 2, HEIGHT // 2)
                 pygame.draw.rect(screen, WHITE, left_paddle)
                 pygame.draw.rect(screen, WHITE, right_paddle)
                 pygame.display.flip()
+
+                # Manejar eventos para permitir pausa
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_ESCAPE:  # Pausar el juego
+                            pause_game()
+                            countdown_start_time = pygame.time.get_ticks()  # Ajustar el inicio del conteo tras pausar
+
+                # Movimiento de las paletas
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_w] and left_paddle.top > 0:
+                    left_paddle.y -= paddle_speed
+                if keys[pygame.K_s] and left_paddle.bottom < HEIGHT:
+                    left_paddle.y += paddle_speed
+                if keys[pygame.K_UP] and right_paddle.top > 0:
+                    right_paddle.y -= paddle_speed
+                if keys[pygame.K_DOWN] and right_paddle.bottom < HEIGHT:
+                    right_paddle.y += paddle_speed
+
                 clock.tick(60)
-                continue
 
         # Movimiento de la bola
         ball.x += ball_speed[0]

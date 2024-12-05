@@ -78,26 +78,6 @@ def show_menu():
                         pygame.quit()
                         sys.exit()
 
-
-        # Manejo de eventos del menú
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w or event.key == pygame.K_UP:  # Mover hacia arriba
-                    selected_option = (selected_option - 1) % len(options)
-                if event.key == pygame.K_s or event.key == pygame.K_DOWN:  # Mover hacia abajo
-                    selected_option = (selected_option + 1) % len(options)
-                if event.key == pygame.K_RETURN:  # Confirmar selección
-                    if selected_option == 0:  # Primera opción: Play
-                        return  # Salir del menú y empezar el juego
-                    if selected_option == 1:  # Segunda opción: Quit
-                        pygame.quit()
-                        sys.exit()
-
-
-
 # Función de pausa
 def pause_game():
     paused = True
@@ -165,18 +145,41 @@ def main_game():
 
         # Verificar si el contador sigue corriendo
         if countdown_running:
-            elapsed_time = (pygame.time.get_ticks() - countdown_start_time) // 1000  # Tiempo en segundos
-            if elapsed_time >= 3:  # Si el contador ha terminado
-                countdown_running = False
-            else:
+            while countdown_running:
+                elapsed_time = (pygame.time.get_ticks() - countdown_start_time) // 1000  # Tiempo en segundos
+                if elapsed_time >= 3:  # Si el contador ha terminado
+                    countdown_running = False
+                    break
+
                 # Dibujar el contador
                 screen.fill(BLACK)
                 draw_text(str(3 - elapsed_time), font, WHITE, screen, WIDTH // 2, HEIGHT // 2)
                 pygame.draw.rect(screen, WHITE, left_paddle)
                 pygame.draw.rect(screen, WHITE, right_paddle)
                 pygame.display.flip()
+
+                # Manejar eventos para permitir pausa
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_ESCAPE:  # Pausar el juego
+                            pause_game()
+                            countdown_start_time = pygame.time.get_ticks()  # Ajustar el inicio del conteo tras pausar
+
+                # Movimiento de las paletas
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_w] and left_paddle.top > 0:
+                    left_paddle.y -= paddle_speed
+                if keys[pygame.K_s] and left_paddle.bottom < HEIGHT:
+                    left_paddle.y += paddle_speed
+                if keys[pygame.K_UP] and right_paddle.top > 0:
+                    right_paddle.y -= paddle_speed
+                if keys[pygame.K_DOWN] and right_paddle.bottom < HEIGHT:
+                    right_paddle.y += paddle_speed
+
                 clock.tick(60)
-                continue
 
         # Movimiento de la bola
         ball.x += ball_speed[0]
@@ -187,8 +190,12 @@ def main_game():
             ball_speed[1] = -ball_speed[1]
 
         # Detección de colisiones con las paletas
-        if ball.colliderect(left_paddle) or ball.colliderect(right_paddle):
-            ball_speed[0] = -ball_speed[0]
+        if ball.colliderect(left_paddle):
+            ball_speed[0] = abs(ball_speed[0])  # Asegurar que la bola vaya hacia la derecha
+            ball_speed[1] += (ball.centery - left_paddle.centery) * 0.05  # Cambiar ángulo
+        if ball.colliderect(right_paddle):
+            ball_speed[0] = -abs(ball_speed[0])  # Asegurar que la bola vaya hacia la izquierda
+            ball_speed[1] += (ball.centery - right_paddle.centery) * 0.05  # Cambiar ángulo
 
          # Detección de puntuaciones
         if ball.left <= 0:  # Punto para la derecha

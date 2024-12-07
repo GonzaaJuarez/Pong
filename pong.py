@@ -33,6 +33,22 @@ def countdown():
         pygame.display.flip()
         time.sleep(0.5)  # Esperar medio segundo entre números
 
+def show_winner(screen, winner, score_left, score_right, font, small_font):
+    screen.fill((0, 0, 0))  # Fondo negro
+
+    # Texto del ganador y del puntaje final
+    winner_text = f"{winner} WIN!"
+    score_text = f"Final Score: {score_left} - {score_right}"
+
+    # Dibujar textos usando la función draw_text
+    draw_text(winner_text, font, WHITE, screen, WIDTH // 2, HEIGHT // 2 - 50)
+    draw_text(score_text, small_font, GRAY, screen, WIDTH // 2, HEIGHT // 2 + 50)
+
+    pygame.display.flip()  # Actualizar la pantalla
+
+    # Esperar unos segundos antes de cerrar el juego
+    pygame.time.wait(5000)  # 7 segundos
+
 def show_difficultys():
     difficultys = ["Easy", "Normal", "Hard"]  # Dificultades
     selected_difficulty = 1  # Por defecto: Normal
@@ -162,7 +178,10 @@ def main_game(singleplayer, ai_speed):
     #Aumento de velocidad de la bola
     start_time = pygame.time.get_ticks()
 
-    while True:
+    # Variable de ejecución
+    running = True
+
+    while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -177,6 +196,9 @@ def main_game(singleplayer, ai_speed):
             left_paddle.y -= paddle_speed
         if keys[pygame.K_s] and left_paddle.bottom < HEIGHT:
             left_paddle.y += paddle_speed
+
+        # Limitar el movimiento de las paletas
+        left_paddle.y = max(0, min(left_paddle.y, HEIGHT - left_paddle.height))
 
         if singleplayer:
             # Movimiento de la IA
@@ -200,6 +222,9 @@ def main_game(singleplayer, ai_speed):
                 right_paddle.y -= paddle_speed
             if keys[pygame.K_DOWN] and right_paddle.bottom < HEIGHT:
                 right_paddle.y += paddle_speed
+
+        # Limitar el movimiento de la paleta derecha
+        right_paddle.y = max(0, min(right_paddle.y, HEIGHT - right_paddle.height))
 
         # Verificar si el contador sigue corriendo
         if countdown_running:
@@ -274,7 +299,9 @@ def main_game(singleplayer, ai_speed):
             target_y -= paddle_speed
         if keys[pygame.K_s]:
             target_y += paddle_speed
-        left_paddle.y += (target_y - left_paddle.y) * 0.2  # Suavizado
+        target_y = max(0, min(target_y, HEIGHT - left_paddle.height))
+        left_paddle.y += (target_y - left_paddle.y) * 0.2
+        left_paddle.y = max(0, min(left_paddle.y, HEIGHT - left_paddle.height))
 
         # Detección de puntuaciones
         if ball.left <= 0:  # Punto para la derecha
@@ -291,21 +318,38 @@ def main_game(singleplayer, ai_speed):
             countdown_running = True
 
         # Winner
-        # Dentro del bucle principal del juego, después de actualizar los puntajes
-        if left_score >= 11 and left_score - right_score >= 2:
-            print("¡Jugador izquierdo gana!")
-            running = False  # Terminar el juego
-        elif right_score >= 11 and right_score - left_score >= 2:
-            print("¡Jugador derecho gana!")
-            running = False  # Terminar el juego
-        elif left_score >= 10 and right_score >= 10:
-            # Continúa hasta que haya una diferencia de 2 puntos
-            if abs(left_score - right_score) >= 2:
-                if left_score > right_score:
-                    print("¡Jugador izquierdo gana!")
-                else:
-                    print("¡Jugador derecho gana!")
-                running = False  # Terminar el juego
+        if singleplayer:
+            if left_score >= 11 and left_score - right_score >= 2:
+                show_winner(screen, "Player", left_score, right_score, font, small_font)
+                running = False
+            elif right_score >= 11 and right_score - left_score >= 2:
+                show_winner(screen, "CPU", left_score, right_score, font, small_font)
+                running = False
+            elif left_score >= 10 and right_score >= 10:
+                # Continúa hasta que haya una diferencia de 2 puntos
+                if abs(left_score - right_score) >= 2:
+                    if left_score > right_score:
+                        show_winner(screen, "Player", left_score, right_score, font, small_font)
+                        running = False
+                    else:
+                        show_winner(screen, "CPU", left_score, right_score, font, small_font)
+                        running = False
+        else:
+            if left_score >= 11 and left_score - right_score >= 2:
+                show_winner(screen, "Player 1", left_score, right_score, font, small_font)
+                running = False
+            elif right_score >= 11 and right_score - left_score >= 2:
+                show_winner(screen, "Player 2", left_score, right_score, font, small_font)
+                running = False
+            elif left_score >= 10 and right_score >= 10:
+                # Continúa hasta que haya una diferencia de 2 puntos
+                if abs(left_score - right_score) >= 2:
+                    if left_score > right_score:
+                        show_winner(screen, "Player 1", left_score, right_score, font, small_font)
+                        running = False
+                    else:
+                        show_winner(screen, "Player 2", left_score, right_score, font, small_font)
+                        running = False
 
         # Dibujar todo
         screen.fill(BLACK)
@@ -341,6 +385,5 @@ if game_mode == "singleplayer":
     main_game(singleplayer=True, ai_speed=ai_speed)
 
 elif game_mode == "multiplayer":
-
     # Iniciar juego en modo Multiplayer
     main_game(singleplayer=False, ai_speed=None)

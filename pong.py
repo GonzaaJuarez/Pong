@@ -33,6 +33,43 @@ def countdown():
         pygame.display.flip()
         time.sleep(0.5)  # Esperar medio segundo entre números
 
+def show_difficultys():
+    difficultys = ["Easy", "Normal", "Hard"]  # Dificultades
+    selected_difficulty = 1  # Por defecto: Normal
+
+    while True:
+        screen.fill(BLACK)
+        draw_text("Select Difficulty", small_font, WHITE, screen, WIDTH // 2, HEIGHT // 4)
+        
+        # Dibujar las opciones con borde de rectángulo
+        for i, difficulty in enumerate(difficultys):
+            text_obj = small_font.render(difficulty, True, WHITE)
+            text_rect = text_obj.get_rect(center=(WIDTH // 2, HEIGHT // 2 + i * 50))
+            
+            if i == selected_difficulty:  # Dibujar solo el borde del rectángulo
+                pygame.draw.rect(screen, WHITE, 
+                                 text_rect.inflate(20, 10),  # Ajustar tamaño del borde
+                                 width=3,  # Espesor del borde
+                                 border_radius=10)  # Esquinas redondeadas
+
+            # Dibujar el texto encima del rectángulo
+            color = WHITE if i == selected_difficulty else GRAY
+            draw_text(difficulty, small_font, color, screen, WIDTH // 2, HEIGHT // 2 + i * 50)
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_w, pygame.K_UP):  # Navegar hacia arriba
+                    selected_difficulty = (selected_difficulty - 1) % len(difficultys)
+                if event.key in (pygame.K_s, pygame.K_DOWN):  # Navegar hacia abajo
+                    selected_difficulty = (selected_difficulty + 1) % len(difficultys)
+                if event.key == pygame.K_RETURN:
+                    return selected_difficulty
+
 # Función para mostrar el menú
 def show_menu():
     options = ["Singleplayer", "Multiplayer", "Quit"]  # Opciones del menú
@@ -98,7 +135,7 @@ def pause_game():
                     paused = False
 
 # Función principal del juego
-def main_game(singleplayer):
+def main_game(singleplayer, ai_speed):
     # Paletas y bola
     paddle_width, paddle_height = 20, 100
     ball_size = 20
@@ -110,7 +147,6 @@ def main_game(singleplayer):
     # Velocidades
     ball_speed = [4, 4]
     paddle_speed = 5
-    ai_speed = 4  # Velocidad de la IA
 
     # Marcador
     left_score = 0
@@ -148,15 +184,22 @@ def main_game(singleplayer):
                 right_paddle.y -= ai_speed
             if ball.centery > right_paddle.centery and right_paddle.bottom < HEIGHT:
                 right_paddle.y += ai_speed
+            
+            # Tiempos de reacción para la IA
+            reaction_time = 10  # Frames de retraso
+            # Inicializar elapsed_time
+            elapsed_time = 0  # <-- Agrega esta línea
+            if elapsed_time % reaction_time == 0:  # Sólo ajusta cada cierto tiempo
+                if ball.centery < right_paddle.centery and right_paddle.top > 0:
+                    right_paddle.y -= ai_speed
+                elif ball.centery > right_paddle.centery and right_paddle.bottom < HEIGHT:
+                    right_paddle.y += ai_speed
         else:
             # Movimiento del jugador 2
             if keys[pygame.K_UP] and right_paddle.top > 0:
                 right_paddle.y -= paddle_speed
             if keys[pygame.K_DOWN] and right_paddle.bottom < HEIGHT:
                 right_paddle.y += paddle_speed
-
-        # Movimiento de la bola, rebotes, puntuación, etc. (mantén el código existente aquí)
-
 
         # Verificar si el contador sigue corriendo
         if countdown_running:
@@ -194,6 +237,7 @@ def main_game(singleplayer):
                 if keys[pygame.K_DOWN] and right_paddle.bottom < HEIGHT:
                     right_paddle.y += paddle_speed
 
+                #Limita 60 FPS
                 clock.tick(60)
 
         # Movimiento de la bola
@@ -203,16 +247,36 @@ def main_game(singleplayer):
         # Rebotes en la parte superior e inferior
         if ball.top <= 0 or ball.bottom >= HEIGHT:
             ball_speed[1] = -ball_speed[1]
+            ball_speed[0] += 0.2 * (-1 if ball_speed[0] < 0 else 1)  # Pequeño ajuste en X
 
         # Detección de colisiones con las paletas
         if ball.colliderect(left_paddle):
-            ball_speed[0] = abs(ball_speed[0])  # Asegurar que la bola vaya hacia la derecha
-            ball_speed[1] += (ball.centery - left_paddle.centery) * 0.05  # Cambiar ángulo
+            offset = (ball.centery - left_paddle.centery) / (paddle_height / 2)
+            ball_speed[0] = abs(ball_speed[0])  # Asegurar dirección hacia la derecha
+            ball_speed[1] += offset * 3  # Ajustar sensibilidad
+            ball_speed[1] = max(min(ball_speed[1], 8), -8)  # Limitar velocidad vertical
         if ball.colliderect(right_paddle):
-            ball_speed[0] = -abs(ball_speed[0])  # Asegurar que la bola vaya hacia la izquierda
-            ball_speed[1] += (ball.centery - right_paddle.centery) * 0.05  # Cambiar ángulo
+            offset = (ball.centery - right_paddle.centery) / (paddle_height / 2)
+            ball_speed[0] = -abs(ball_speed[0])  # Asegurar dirección hacia la izquierda
+            ball_speed[1] += offset * 3  # Ajustar sensibilidad
+            ball_speed[1] = max(min(ball_speed[1], 8), -8)  # Limitar velocidad vertical
 
-         # Detección de puntuaciones
+        # Rebote con efecto spin
+        if ball.colliderect(left_paddle):
+            if keys[pygame.K_w]:  # Si la paleta se mueve hacia arriba
+                ball_speed[1] -= 2
+            if keys[pygame.K_s]:  # Si la paleta se mueve hacia abajo
+                ball_speed[1] += 2
+
+        # Movimiento suave con fricción
+        target_y = left_paddle.y
+        if keys[pygame.K_w]:
+            target_y -= paddle_speed
+        if keys[pygame.K_s]:
+            target_y += paddle_speed
+        left_paddle.y += (target_y - left_paddle.y) * 0.2  # Suavizado
+
+        # Detección de puntuaciones
         if ball.left <= 0:  # Punto para la derecha
             right_score += 1
             ball.x, ball.y = WIDTH // 2 - ball_size // 2, HEIGHT // 2 - ball_size // 2
@@ -225,6 +289,23 @@ def main_game(singleplayer):
             ball_speed = [-4, -4]
             countdown_start_time = pygame.time.get_ticks()
             countdown_running = True
+
+        # Winner
+        # Dentro del bucle principal del juego, después de actualizar los puntajes
+        if left_score >= 11 and left_score - right_score >= 2:
+            print("¡Jugador izquierdo gana!")
+            running = False  # Terminar el juego
+        elif right_score >= 11 and right_score - left_score >= 2:
+            print("¡Jugador derecho gana!")
+            running = False  # Terminar el juego
+        elif left_score >= 10 and right_score >= 10:
+            # Continúa hasta que haya una diferencia de 2 puntos
+            if abs(left_score - right_score) >= 2:
+                if left_score > right_score:
+                    print("¡Jugador izquierdo gana!")
+                else:
+                    print("¡Jugador derecho gana!")
+                running = False  # Terminar el juego
 
         # Dibujar todo
         screen.fill(BLACK)
@@ -242,16 +323,24 @@ def main_game(singleplayer):
         
         current_time = pygame.time.get_ticks()
         elapsed_time = (current_time - start_time) // 1000  # Tiempo en segundos
-        
-        # Incrementar la velocidad cada 5 segundos
-        if elapsed_time > 0 and elapsed_time % 5 == 0:
-            ball_speed[0] *= 1.05
-            ball_speed[1] *= 1.05
-            start_time = pygame.time.get_ticks()  # Reiniciar el tiempo
 
 # Lógica principal
 game_mode = show_menu()
 if game_mode == "singleplayer":
-    main_game(singleplayer=True)
+    # Selección de dificultad
+    difficulty = show_difficultys()
+    # Asignar velocidad de la IA según dificultad
+    if difficulty == 0:  # Easy
+        ai_speed = 3
+    elif difficulty == 1:  # Normal
+        ai_speed = 4
+    elif difficulty == 2:  # Hard
+        ai_speed = 6
+
+    # Iniciar juego en modo Singleplayer
+    main_game(singleplayer=True, ai_speed=ai_speed)
+
 elif game_mode == "multiplayer":
-    main_game(singleplayer=False)
+
+    # Iniciar juego en modo Multiplayer
+    main_game(singleplayer=False, ai_speed=None)

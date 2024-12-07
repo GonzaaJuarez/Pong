@@ -1,6 +1,7 @@
 import pygame
 import sys
 import time
+import random
 
 # Inicialización de Pygame
 pygame.init()
@@ -151,7 +152,7 @@ def pause_game():
                     paused = False
 
 # Función principal del juego
-def main_game(singleplayer, ai_speed):
+def main_game(singleplayer, ai_speed, ai_reaction_time, precision_offset, error_chance):
     # Paletas y bola
     paddle_width, paddle_height = 20, 100
     ball_size = 20
@@ -181,6 +182,9 @@ def main_game(singleplayer, ai_speed):
     # Variable de ejecución
     running = True
 
+    # Contador para medir el tiempo o la cantidad de cuadros que han pasado desde el inicio del juego o una acción específica.
+    frame_count = 0
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -206,12 +210,23 @@ def main_game(singleplayer, ai_speed):
                 right_paddle.y -= ai_speed
             if ball.centery > right_paddle.centery and right_paddle.bottom < HEIGHT:
                 right_paddle.y += ai_speed
+
+            # Implementar reacción basada en tiempo
+            if frame_count % ai_reaction_time == 0:  # Reaccionar solo en ciertos frames
+                if ball.centery < right_paddle.centery and right_paddle.top > 0:
+                    right_paddle.y -= ai_speed
+                elif ball.centery > right_paddle.centery and right_paddle.bottom < HEIGHT:
+                    right_paddle.y += ai_speed
+
+            # Movimiento de la IA con precisión ajustada
+            target_y = ball.centery + precision_offset
+            if target_y < right_paddle.centery and right_paddle.top > 0:
+                right_paddle.y -= ai_speed
+            elif target_y > right_paddle.centery and right_paddle.bottom < HEIGHT:
+                right_paddle.y += ai_speed
             
-            # Tiempos de reacción para la IA
-            reaction_time = 10  # Frames de retraso
-            # Inicializar elapsed_time
-            elapsed_time = 0  # <-- Agrega esta línea
-            if elapsed_time % reaction_time == 0:  # Sólo ajusta cada cierto tiempo
+            # Decisión basada en probabilidad
+            if random.random() > error_chance:  # Solo mover si no ocurre error
                 if ball.centery < right_paddle.centery and right_paddle.top > 0:
                     right_paddle.y -= ai_speed
                 elif ball.centery > right_paddle.centery and right_paddle.bottom < HEIGHT:
@@ -368,6 +383,10 @@ def main_game(singleplayer, ai_speed):
         current_time = pygame.time.get_ticks()
         elapsed_time = (current_time - start_time) // 1000  # Tiempo en segundos
 
+        # Aumento en el Contador la cantidad de cuadros que han pasado desde el inicio del juego o una acción específica.
+        frame_count += 1
+
+
 # Lógica principal
 game_mode = show_menu()
 if game_mode == "singleplayer":
@@ -375,15 +394,24 @@ if game_mode == "singleplayer":
     difficulty = show_difficultys()
     # Asignar velocidad de la IA según dificultad
     if difficulty == 0:  # Easy
-        ai_speed = 3
+        ai_speed = 2
+        ai_reaction_time = 20  # Mayor retraso
+        precision_offset = 40  # IA más imprecisa
+        error_chance = 0.5  # 50% de ignorar el movimiento
     elif difficulty == 1:  # Normal
-        ai_speed = 4
+        ai_speed = 3.5
+        ai_reaction_time = 10
+        precision_offset = 20
+        error_chance = 0.3
     elif difficulty == 2:  # Hard
-        ai_speed = 6
+        ai_speed = 5
+        ai_reaction_time = 5  # Manor retraso
+        precision_offset = 10  # IA más precisa
+        error_chance = 0.1  # Siempre intenta alcanzar la bola
 
     # Iniciar juego en modo Singleplayer
-    main_game(singleplayer=True, ai_speed=ai_speed)
+    main_game(singleplayer=True, ai_speed=ai_speed, ai_reaction_time=ai_reaction_time, precision_offset=precision_offset, error_chance=error_chance)
 
 elif game_mode == "multiplayer":
     # Iniciar juego en modo Multiplayer
-    main_game(singleplayer=False, ai_speed=None)
+    main_game(singleplayer=False, ai_speed=None, ai_reaction_time=None, precision_offset=None, error_chance=None)
